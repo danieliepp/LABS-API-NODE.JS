@@ -6,6 +6,11 @@ const userSchema = new mongoose.Schema ({
         required: true,
         max: 255
     },
+    token: {
+        type: String,
+        required: false,
+        max: 1024
+    },
     first_name: {
         type: String,
         required: true,

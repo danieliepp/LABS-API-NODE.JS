@@ -19,7 +19,7 @@ if(emailExist) return res.status(400).send('Email already exists');
 const salt = await bcrypt.genSalt(10);
 const hashPassword = await bcrypt.hash(req.body.password, salt);
 //Create new User
-    const user = new User({
+    User.create({
         username: req.body.username,
         first_name: req.body.first_name,
         last_name: req.body.last_name,
@@ -28,13 +28,15 @@ const hashPassword = await bcrypt.hash(req.body.password, salt);
         club: req.body.club,
         password: hashPassword,
         confirm_password: hashPassword
-    });
-    try{
-        const savedUser = await user.save();
-        res.send({savedUser, success: true});
-    } catch(error) {
-        res.status(400).send(error);
-    }
+    },
+    function (err, user) {
+        if (err) return res.status(500).send("There was a problem registering the user.")
+        // create a token
+        var token = jwt.sign({ id: user._id }, process.env.TOKEN_SECRET, {
+          expiresIn: 86400 // expires in 24 hours
+        });
+        res.send({  success: true, token: token});
+      });
 });
 
 //LOGIN
@@ -53,8 +55,9 @@ router.post('/login', async (req, res) => {
         if(!validPass) return res.status(400).send({msg: "password is incorrect"});
 
         //Create and assign a token
-        const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET); 
-        res.header('auth-login', token);
+        const token = jwt.sign({_id: user._id}, process.env.TOKEN_SECRET, {
+            expiresIn: 86400 // expires in 24 hours
+        });
         if(error){
             res.status(400).send({success: false});
         }else{ 
